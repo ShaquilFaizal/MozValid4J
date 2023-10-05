@@ -2,27 +2,35 @@ package validation.mozvalid4j.annotations.impl;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+//import jakarta.validation.ValidationException;
 import validation.mozvalid4j.annotations.MobileNumber;
+import validation.mozvalid4j.annotations.exceptionHandler.ValidationException;
 
 public class MobileNumberValidator implements ConstraintValidator<MobileNumber, String> {
     private String countryCode;
+    private  String message;
     private String[] allowedOperators;
     @Override
     public void initialize(MobileNumber mobileNumber) {
         ConstraintValidator.super.initialize(mobileNumber);
         this.countryCode = mobileNumber.countryCode();
         this.allowedOperators = mobileNumber.allowedOperators();
+        this.message = mobileNumber.message();
     }
 
     @Override
     public boolean isValid(String mobileNumber, ConstraintValidatorContext context) {
-        return switch (countryCode.toLowerCase()) {
+        boolean isValid = switch (countryCode.toLowerCase()) {
             case "required" -> validateMobileNumberWithCountryCode(mobileNumber, allowedOperators);
             case "off" -> validateMobileNumberWithoutCountryCode(mobileNumber, allowedOperators);
             case "optional" ->
                     checkIfNumberHasCountryCode(mobileNumber) ? validateMobileNumberWithCountryCode(mobileNumber, allowedOperators) : validateMobileNumberWithoutCountryCode(mobileNumber, allowedOperators);
             default -> false;
         };
+        if(!isValid){
+            throw new ValidationException(message);
+        }
+       return isValid;
     }
 
    private boolean checkIfNumberHasCountryCode(String mobileNumber){
